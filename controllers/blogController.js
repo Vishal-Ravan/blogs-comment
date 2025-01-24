@@ -4,12 +4,14 @@ const User = require('../models/User');
 // Create a new blog (only admin)
 exports.createBlog = async (req, res) => {
     const { title, content } = req.body;
+    const image = req.file ? `/uploads/${req.file.filename}` : null; // Get the image path from multer
 
     try {
         const newBlog = new Blog({
             title,
             content,
             author: req.user._id,
+            image,  // Add image field
         });
 
         await newBlog.save();
@@ -33,6 +35,7 @@ exports.getBlogs = async (req, res) => {
 exports.updateBlog = async (req, res) => {
     const { title, content } = req.body;
     const { id } = req.params;
+    const image = req.file ? `/uploads/${req.file.filename}` : null; // Get the image path from multer if file uploaded
 
     try {
         const blog = await Blog.findById(id);
@@ -43,6 +46,7 @@ exports.updateBlog = async (req, res) => {
 
         blog.title = title || blog.title;
         blog.content = content || blog.content;
+        blog.image = image || blog.image;  // Update image if new image is uploaded
 
         await blog.save();
         res.json(blog);
@@ -51,14 +55,12 @@ exports.updateBlog = async (req, res) => {
     }
 };
 
-
-
 // Get a single blog by ID
 exports.getBlogById = async (req, res) => {
     const { id } = req.params;
 
     try {
-        // Find the blog by ID and populate the author and likes fields
+        // Find the blog by ID and populate the author, likes, and comments fields
         const blog = await Blog.findById(id)
             .populate('author', 'username')  // Populate the author with their username
             .populate('likes', 'username')   // Populate likes with their usernames
